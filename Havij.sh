@@ -1,6 +1,7 @@
 #!/bin/bash
 # =================================================================
 # اسکریپت جامع مدیریت سرور
+# Version: 2.0
 # Telegram: @sorshtaml
 # =================================================================
 # تعریف رنگ‌ها برای خروجی بهتر
@@ -869,7 +870,7 @@ update_and_install_prerequisites() {
     # --- تابع اصلی برای آپدیت و نصب بسته‌ها ---
     update_and_install_packages() {
         # --- STEP 1: AUTOMATIC SYSTEM UPDATE & UPGRADE ---
-        local update_cmd="DEBIAN_FRONTEND=noninteractive apt-get --fix-broken install -y -qq && apt-get update -qq && apt-get upgrade -y -qq -o Dpkg::Options::=\"--force-confdef\" -o Dpkg::Options::=\"--force-confold\""
+        local update_cmd="DEBIAN_FRONTEND=noninteractive dpkg --force-confold --configure -a && DEBIAN_FRONTEND=noninteractive apt-get --fix-broken install -yq && apt-get update -qq && DEBIAN_FRONTEND=noninteractive apt-get -yq -o Dpkg::Options::=\"--force-confdef\" -o Dpkg::Options::=\"--force-confold\" dist-upgrade"
         run_with_spinner "Repairing, Updating, and Upgrading System" "$update_cmd"
         
         # --- STEP 2: INTERACTIVE GROUPED DEPENDENCIES INSTALLATION ---
@@ -927,7 +928,6 @@ disable_ipv6() {
     
     # اضافه کردن تنظیمات غیرفعال کردن IPv6
     sudo bash -c 'cat >> /etc/sysctl.conf <<EOL
-
 # Disabling IPv6
 net.ipv6.conf.all.disable_ipv6 = 1
 net.ipv6.conf.default.disable_ipv6 = 1
@@ -1450,6 +1450,98 @@ bbr_installation_menu() {
         fi
     done
 }
+# --- تابع تنظیمات MTU ---
+mtu_settings_menu() {
+    while true; do
+        clear
+        display_header "MTU Settings"
+        echo -e "${WHITE}Please choose an option:${NC}"
+        echo -e "  ${GREEN}1)${NC} Enable MTU"
+        echo -e "  ${GREEN}2)${NC} Disable MTU"
+        echo -e "  ${GREEN}0)${NC} Back to Main Menu"
+        echo -e "${YELLOW}═══════════════════════════════════════════${NC}"
+        
+        read -p "Enter your choice [0-2]: " choice
+        
+        case $choice in
+            0)
+                break
+                ;;
+            1)
+                # Enable MTU
+                while true; do
+                    echo -ne "${WHITE}Enter your MTU value (default 1500):${NC} "
+                    read mtu_value
+                    
+                    # اگر مقدار وارد نشود، از مقدار پیش‌فرض استفاده کن
+                    if [[ -z "$mtu_value" ]]; then
+                        mtu_value=1500
+                        break
+                    fi
+                    
+                    # بررسی اینکه مقدار عددی است و در محدوده 500 تا 1500 قرار دارد
+                    if [[ "$mtu_value" =~ ^[0-9]+$ ]] && [[ "$mtu_value" -ge 500 ]] && [[ "$mtu_value" -le 1500 ]]; then
+                        break
+                    else
+                        echo -e "${RED}Invalid MTU value. Please enter a number between 500 and 1500.${NC}"
+                    fi
+                done
+                
+                # تابع برای اعمال MTU
+                apply_mtu() {
+                    # اعمال MTU روی تمام اینترفیس‌ها (به جز lo)
+                    for iface in $(ls /sys/class/net | grep -v lo); do 
+                        sudo ip link set dev "$iface" mtu "$mtu_value"; 
+                    done
+                    
+                    # حذف کرون‌جاب‌های قبلی مرتبط با MTU
+                    crontab -l 2>/dev/null | grep -v '@reboot for iface in' | crontab -
+                    
+                    # افزودن کرون‌جاب جدید
+                    (crontab -l 2>/dev/null; echo "@reboot for iface in \$(ls /sys/class/net | grep -v lo); do ip link set dev \"\$iface\" mtu $mtu_value; done") | crontab -
+                }
+                
+                # اجرای تابع با انیمیشن
+                run_with_spinner "Applying MTU settings" "apply_mtu"
+                echo -e "${GREEN}✅ MTU settings applied successfully!${NC}"
+                ;;
+            2)
+                # Disable MTU
+                # تابع برای غیرفعال کردن MTU
+                disable_mtu() {
+                    # بازگردانی MTU به مقدار پیش‌فرض 1500
+                    for iface in $(ls /sys/class/net | grep -v lo); do 
+                        sudo ip link set dev "$iface" mtu 1500; 
+                    done
+                    
+                    # حذف کرون‌جاب‌های مرتبط با MTU
+                    crontab -l 2>/dev/null | grep -v '@reboot for iface in' | crontab -
+                }
+                
+                # اجرای تابع با انیمیشن
+                run_with_spinner "Disabling MTU settings" "disable_mtu"
+                echo -e "${GREEN}✅ MTU settings disabled successfully!${NC}"
+                
+                # پرسش برای ریبوت
+                read -p "Do you want to reboot the system now for changes to take effect? (y/n): " reboot_choice
+                if [[ "$reboot_choice" =~ ^[yY]$ ]]; then
+                    echo -e "${CYAN}Rebooting system...${NC}"
+                    sudo reboot
+                else
+                    echo -e "${YELLOW}System will not be rebooted. Changes will take effect after next reboot.${NC}"
+                fi
+                ;;
+            *)
+                echo -e "${RED}Invalid option. Please try again.${NC}"
+                ;;
+        esac
+        
+        # اگر گزینه 0 (بازگشت) انتخاب نشده باشد، منتظر بمانیم
+        if [ "$choice" != "0" ]; then
+            read -p $'\nPress Enter to continue...'
+        fi
+    done
+}
 # --- تابع منوی اصلی ---
 main_menu() {
     while true; do
@@ -1463,9 +1555,10 @@ main_menu() {
         echo -e "  ${YELLOW}5)${NC} BBR installation and network settings"
         echo -e "  ${YELLOW}6)${NC} Port scanning"
         echo -e "  ${YELLOW}7)${NC} Speed test"
-        echo -e "  ${YELLOW}8)${NC} Exit"
+        echo -e "  ${YELLOW}8)${NC} Set MTU"
+        echo -e "  ${YELLOW}9)${NC} Exit"
         echo -e "${YELLOW}═══════════════════════════════════════════${NC}"
-        read -p "Enter your choice [1-8]: " choice
+        read -p "Enter your choice [1-9]: " choice
         case $choice in
             1) set_best_mirror ;;
             2) set_best_dns ;;
@@ -1474,7 +1567,8 @@ main_menu() {
             5) bbr_installation_menu ;;
             6) port_scanning ;;
             7) speed_test ;;
-            8) echo -e "${GREEN}Goodbye!${NC}"; exit 0 ;;
+            8) mtu_settings_menu ;;
+            9) echo -e "${GREEN}Goodbye!${NC}"; exit 0 ;;
             *) echo -e "${RED}Invalid option. Please try again.${NC}" ;;
         esac
         read -p $'\nPress Enter to return to the main menu...'
