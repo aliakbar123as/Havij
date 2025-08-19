@@ -4,10 +4,7 @@
 
 یک جعبه‌ابزار همه‌کاره برای مدیریت، بهینه‌سازی و افزایش امنیت سرورهای لینوکس (اوبونتو و دبیان)
 
-[![GitHub Stars](https://img.shields.io/github/stars/aliakbar123as/Havij?style=for-the-badge&color=orange)](https://github.com/aliakbar123as/Havij/stargazers)
-[![GitHub Forks](https://img.shields.io/github/forks/aliakbar123as/Havij?style=for-the-badge&color=blue)](https://github.com/aliakbar123as/Havij/network/members)
-[![GitHub Issues](https://img.shields.io/github/issues/aliakbar123as/Havij?style=for-the-badge&color=red)](https://github.com/aliakbar123as/Havij/issues)
-[![License](https://img.shields.io/badge/License-GPL--3.0-green?style=for-the-badge)](https://www.gnu.org/licenses/gpl-3.0.en.html)
+
 
 </div>
 
