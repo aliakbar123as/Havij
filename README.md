@@ -7,7 +7,7 @@
 [![GitHub Stars](https://img.shields.io/github/stars/aliakbar123as/Havij?style=for-the-badge&color=orange)](https://github.com/aliakbar123as/Havij/stargazers)
 [![GitHub Forks](https://img.shields.io/github/forks/aliakbar123as/Havij?style=for-the-badge&color=blue)](https://github.com/aliakbar123as/Havij/network/members)
 [![GitHub Issues](https://img.shields.io/github/issues/aliakbar123as/Havij?style=for-the-badge&color=red)](https://github.com/aliakbar123as/Havij/issues)
-[![License](https://img.shields.io/github/license/aliakbar123as/Havij?style=for-the-badge&color=green)](https://github.com/aliakbar123as/Havij/blob/main/LICENSE)
+[![License](https://img.shields.io/badge/License-GPL--3.0-green?style=for-the-badge)](https://www.gnu.org/licenses/gpl-3.0.en.html)
 
 </div>
 
@@ -52,9 +52,9 @@ wget -N --no-check-certificate [https://raw.githubusercontent.com/aliakbar123as/
 [1;37mTelegram Channel:[0m @coming-soon
 [1;37mTelegram ID:[0m      @sorshtaml
 [1;93m═══════════════════════════════════════════[0m
-[0;36mIP Address:[0m 192.168.1.10
-[0;36mLocation:[0m   Iran (ir)
-[0;36mDatacenter:[0m Asiatech
+[0;36mIP Address:[0m 5.231.105.254
+[0;36mLocation:[0m   Netherlands (nl)
+[0;36mDatacenter:[0m Ferdinand Zink Trading AS Tube hosting
 [1;93m═══════════════════════════════════════════[0m
 [1;37mMain Menu[0m
 [1;93m═══════════════════════════════════════════[0m
@@ -69,14 +69,14 @@ wget -N --no-check-certificate [https://raw.githubusercontent.com/aliakbar123as/
   [1;93m8)[0m Set MTU
   [1;93m9)[0m Exit
 [1;93m═══════════════════════════════════════════[0m
-Enter your choice [1-9]: 
+[1;37mEnter your choice [1-9]: [0m
 ```
 
 ---
 
 ## 📜 مجوز (License)
 
-این پروژه تحت مجوز MIT منتشر شده است. برای اطلاعات بیشتر فایل `LICENSE` را مطالعه کنید.
+این پروژه تحت مجوز [GPL-3.0](https://www.gnu.org/licenses/gpl-3.0.en.html) منتشر شده است.
 
 ---
 <div align="center">
