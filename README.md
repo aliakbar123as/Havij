@@ -48,8 +48,28 @@ bash <(curl -sL https://raw.githubusercontent.com/aliakbar123as/Havij/main/Havij
 
 ## 📸 نمایی از محیط اسکریپت
 
-<img width="174" height="152" alt="image" src="https://github.com/user-attachments/assets/5aa01d73-9c53-4eef-8261-38b62769fb5e" />
-
+```ansi
+[1;37mTelegram Channel:[0m @coming-soon
+[1;37mTelegram ID:[0m      @sorshtaml
+[1;93m═══════════════════════════════════════════[0m
+[0;36mIP Address:[0m 5.231.105.254
+[0;36mLocation:[0m   Netherlands (nl)
+[0;36mDatacenter:[0m Ferdinand Zink Trading AS Tube hosting
+[1;93m═══════════════════════════════════════════[0m
+[1;37mMain Menu[0m
+[1;93m═══════════════════════════════════════════[0m
+[1;37mPlease choose an option:[0m
+  [1;93m1)[0m Setting the best Mirror
+  [1;93m2)[0m Setting the best DNS
+  [1;93m3)[0m Optimization Network
+  [1;93m4)[0m Update upgrade and install prerequisites
+  [1;93m5)[0m BBR installation and network settings
+  [1;93m6)[0m Port scanning
+  [1;93m7)[0m Speed test
+  [1;93m8)[0m Set MTU
+  [1;93m9)[0m Exit
+[1;93m═══════════════════════════════════════════[0m
+[1;37mEnter your choice [1-9]: [0m
 ```
 
 ---
