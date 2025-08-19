@@ -41,7 +41,7 @@
 برای اجرا، کافیست دستور زیر را در ترمینال سرور خود (با دسترسی روت) وارد کنید:
 
 ```bash
-wget -N --no-check-certificate [https://raw.githubusercontent.com/aliakbar123as/Havij/main/Havij.sh](https://raw.githubusercontent.com/aliakbar123as/Havij/main/Havij.sh) && bash Havij.sh
+bash <(curl -sL https://raw.githubusercontent.com/aliakbar123as/Havij/main/Havij.sh)
 ```
 
 ---
