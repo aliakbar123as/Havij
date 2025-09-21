@@ -1424,20 +1424,153 @@ revert_bbr_settings() {
         echo -e "${RED}❌ Backup file not found. Cannot revert to default settings.${NC}"
     fi
 }
-# --- تابع منوی BBR (به‌روز شده) ---
+
+# --- توابع مربوط به مدیریت Transparent Huge Pages (THP) ---
+
+# تابع بررسی وضعیت THP
+status_thp() {
+    clear
+    display_header "THP Status"
+    echo -e "${CYAN}Checking current status of Transparent Huge Pages...${NC}"
+    local status
+    status=$(cat /sys/kernel/mm/transparent_hugepage/enabled)
+    
+    # بررسی اینکه کلمه [never] در خروجی وجود دارد یا خیر
+    if [[ "$status" == *"[never]"* ]]; then
+        echo -e "\nStatus: ${RED}THP is inactive${NC}"
+    else
+        echo -e "\nStatus: ${GREEN}THP is active${NC}"
+    fi
+    
+    echo -e "Current setting: ${YELLOW}$status${NC}"
+}
+
+# تابع غیرفعال‌سازی THP
+disable_thp() {
+    clear
+    display_header "Disabling THP"
+    local THP_SERVICE="/etc/systemd/system/disable-thp.service"
+    
+    # مرحله ۱: غیرفعال‌سازی آنی
+    echo -e "${CYAN}Disabling THP at runtime...${NC}"
+    if echo never | sudo tee /sys/kernel/mm/transparent_hugepage/enabled > /dev/null && \
+       echo never | sudo tee /sys/kernel/mm/transparent_hugepage/defrag > /dev/null; then
+        echo -e "${GREEN}✅ Runtime disabling successful.${NC}"
+    else
+        echo -e "${RED}❌ Failed to disable THP at runtime.${NC}"
+        return 1
+    fi
+
+    # مرحله ۲: ایجاد سرویس systemd برای دائمی کردن تغییرات
+    echo -e "${CYAN}Creating persistent systemd service...${NC}"
+    sudo tee "$THP_SERVICE" > /dev/null <<'EOF'
+[Unit]
+Description=Disable Transparent Huge Pages (THP)
+After=multi-user.target
+
+[Service]
+Type=oneshot
+ExecStart=/bin/sh -c "echo 'never' > /sys/kernel/mm/transparent_hugepage/enabled && echo 'never' > /sys/kernel/mm/transparent_hugepage/defrag"
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+    # مرحله ۳: فعال‌سازی و اجرای سرویس
+    sudo systemctl daemon-reload
+    sudo systemctl enable --now disable-thp.service >/dev/null 2>&1
+    
+    # بررسی وضعیت نهایی
+    if systemctl is-enabled --quiet disable-thp.service; then
+        echo -e "${GREEN}✅ Systemd service created and enabled successfully.${NC}"
+        echo -e "${GREEN}THP will remain disabled after reboot.${NC}"
+    else
+        echo -e "${RED}❌ Failed to create or enable systemd service.${NC}"
+    fi
+}
+
+# تابع حذف تغییرات THP
+remove_thp_changes() {
+    clear
+    display_header "Removing THP Changes"
+    local THP_SERVICE="/etc/systemd/system/disable-thp.service"
+
+    if [ ! -f "$THP_SERVICE" ]; then
+        echo -e "${YELLOW}No THP service file found. It seems THP was not disabled by this script.${NC}"
+        echo -e "${YELLOW}No changes to remove.${NC}"
+        return
+    fi
+    
+    # مرحله ۱: غیرفعال کردن و حذف سرویس
+    echo -e "${CYAN}Disabling and removing systemd service...${NC}"
+    sudo systemctl disable --now disable-thp.service >/dev/null 2>&1
+    sudo rm -f "$THP_SERVICE"
+    sudo systemctl daemon-reload
+    echo -e "${GREEN}✅ Systemd service removed.${NC}"
+    
+    # مرحله ۲: بازگرداندن به حالت پیش‌فرض (madvise)
+    echo -e "${CYAN}Re-enabling THP to default 'madvise' setting at runtime...${NC}"
+    echo madvise | sudo tee /sys/kernel/mm/transparent_hugepage/enabled > /dev/null
+    echo madvise | sudo tee /sys/kernel/mm/transparent_hugepage/defrag > /dev/null
+    
+    echo -e "\n${GREEN}✅ THP changes have been reverted.${NC}"
+    echo -e "${YELLOW}The system will return to its default THP state after the next reboot.${NC}"
+}
+
+# --- تابع منوی THP ---
+thp_menu() {
+    while true; do
+        clear
+        display_header "Enable/Disable THP"
+        echo -e "${WHITE}Please choose an option:${NC}"
+        echo -e "  ${GREEN}1)${NC} Disable THP"
+        echo -e "  ${GREEN}2)${NC} Remove Changes THP"
+        echo -e "  ${GREEN}3)${NC} Status THP"
+        echo -e "  ${GREEN}0)${NC} Back to Kernel Tuning Menu"
+        echo -e "${YELLOW}═══════════════════════════════════════════${NC}"
+        
+        read -p "Enter your choice [0-3]: " choice
+        
+        case $choice in
+            0)
+                break
+                ;;
+            1)
+                disable_thp
+                ;;
+            2)
+                remove_thp_changes
+                ;;
+            3)
+                status_thp
+                ;;
+            *)
+                echo -e "${RED}Invalid option. Please try again.${NC}"
+                ;;
+        esac
+        
+        read -p $'\nPress Enter to continue...'
+    done
+}
+
+# --- تابع منوی بهینه‌سازی‌های هسته و شبکه (نام جدید و بهتر) ---
 bbr_installation_menu() {
     while true; do
         clear
-        display_header "BBR installation and network settings"
+        # تغییر عنوان برای جامع‌تر شدن
+        display_header "Kernel and Network Tuning"
         echo -e "${WHITE}Please choose an option:${NC}"
         echo -e "  ${GREEN}1)${NC} Installing BBR"
         echo -e "  ${GREEN}2)${NC} Reverting to default settings"
         echo -e "  ${GREEN}3)${NC} Enable/Disable IPv6"
         echo -e "  ${GREEN}4)${NC} Enable/Disable Ping (ICMP)"
+        # گزینه جدید اضافه شده است که منوی THP را فراخوانی می‌کند
+        echo -e "  ${GREEN}5)${NC} Enable/Disable THP"
         echo -e "  ${GREEN}0)${NC} Back to Main Menu"
         echo -e "${YELLOW}═══════════════════════════════════════════${NC}"
         
-        read -p "Enter your choice [0-4]: " choice
+        # محدوده انتخاب را به‌روز کنید
+        read -p "Enter your choice [0-5]: " choice
         
         case $choice in
             0)
@@ -1454,6 +1587,10 @@ bbr_installation_menu() {
                 ;;
             4)
                 ping_icmp_toggle_menu
+                ;;
+            # کیس جدید برای فراخوانی منوی THP
+            5)
+                thp_menu
                 ;;
             *)
                 echo -e "${RED}Invalid option. Please try again.${NC}"
